@@ -1,5 +1,5 @@
-# Laravel 9 SMS Notification Code Step by Step
-In this post, I will show you how to implement Laravel 9 SMS notification using Vonage API (formerly known as Nexmo). Sometimes we need to implement a notification that will directly send an SMS to your user transaction.
+# Laravel SMS Notification Code Step by Step
+In this post, I will show you how to implement Laravel SMS notification using Vonage API (formerly known as Nexmo). Sometimes we need to implement a notification that will directly send an SMS to your user transaction.
 
 ## System Requirements
 
@@ -15,13 +15,13 @@ Now let's start.
 
 ## Step 1: Laravel Installation
 
-If you don't have a Laravel 9 install in your local just run the following command below:
+If you don't have a Laravel install in your local just run the following command below:
    
     composer create-project --prefer-dist laravel/laravel laravel-sms-notification
 
 ## Step 2: Database Configuration
 
-If your **Laravel project** is fresh then you need to update your database credentials. Just open the .env file in your Laravel 9 project.
+If your **Laravel project** is fresh then you need to update your database credentials. Just open the .env file in your Laravel  project.
 
 **.env**
 
@@ -107,7 +107,7 @@ Because we are using phone_number from the user table we need to add this field 
             public function run()
             {
                 User::create([
-                    'name' => 'Saleh Muhammad',
+                    'name' => 'XYZ',
                     'email' => 'email@gmail.com',
                     'phone_number' => '+923139xxxxxx',
                     'password' => bcrypt('password')
@@ -136,15 +136,128 @@ Then add the credentials to your **.ENV** file.
         
 Next, we will add sms_from it to our config/services.php file. The sms_from is the phone number to use for sending messages and will be sent from.
 
-        'nexmo' => [
-            'sms_from' => 'Vonage SMS API HERE',
-        ],
+      'nexmo' => [
+         'sms_from' => 'Vonage SMS API HERE',
+      ],
         
  ## Step 5: Setting Up Controller
  Run the bellow commond for HomeController 
  
     php artisan make:controller HomeController
     
-In this section, we will add our SMS notification in our HomeController which we set in our routes. See below the complete code of our controller:
+In this section, we will add SMS notification function in HomeController. See below the complete code of our controller:
+
+      <?php
+
+      namespace App\Http\Controllers;
+
+      use App\Models\User;
+
+      class HomeController extends Controller
+      {
+          public function send()
+          {
+              $user = User::first();
+              $basic  = new \Nexmo\Client\Credentials\Basic('595e3f0f', 'zihbVfSTJRzo3vPh');
+              $client = new \Nexmo\Client($basic);
+
+              $message = $client->message()->send([
+                  'to' => $user->phone_number,
+                  'from' => 'XYZ',
+                  'text' => 'Hi, Dear Sir how are you '
+              ]);
+
+              dd('SMS has been sent successfully!.');
+          }
+      }
+      
+## Step 6: Setting Up User Model
+
+      <?php
+
+      namespace App\Models;
+
+      use Illuminate\Database\Eloquent\Factories\HasFactory;
+      use Illuminate\Foundation\Auth\User as Authenticatable;
+      use Laravel\Sanctum\HasApiTokens;
+
+      class User extends Authenticatable
+      {
+          use HasApiTokens, HasFactory;
+
+          /**
+           * The attributes that are mass assignable.
+           *
+           * @var string[]
+           */
+          protected $fillable = [
+              'name',
+              'email',
+              'password',
+              'phone_number',
+          ];
+
+          /**
+           * The attributes that should be hidden for serialization.
+           *
+           * @var array
+           */
+          protected $hidden = [
+              'password',
+              'remember_token',
+          ];
+
+          /**
+           * The attributes that should be cast.
+           *
+           * @var array
+           */
+          protected $casts = [
+              'email_verified_at' => 'datetime',
+          ];
+      }
+      
+## Step 7: Setting up Routes
+
+Next, we will create a route for our SMS notification sending. Just open the **routes/web.php** file and add the following routes.
+
+      <?php
+
+      use Illuminate\Support\Facades\Route;
+
+      /*
+      |--------------------------------------------------------------------------
+      | Web Routes
+      |--------------------------------------------------------------------------
+      |
+      | Here is where you can register web routes for your application. These
+      | routes are loaded by the RouteServiceProvider within a group which
+      | contains the "web" middleware group. Now create something great!
+      |
+      */
+
+      Route::get('/', function () {
+          return view('welcome');
+      });
+
+
+      Route::get('/send', '\App\Http\Controllers\HomeController@send')->name('home.send');
+  
+ You can test it now by running the serve command:
+ 
+    php artisan serve
+    
+ Then run the URL below to your browser to send an SMS notifications to your user.
+ 
+    http://127.0.0.1:8000/send
+   
+Now you will see this output in your phone.
+
+![image](https://user-images.githubusercontent.com/74606108/186329267-58b4d64b-75c9-4c08-8045-34967d25f866.png)
+
+ I hope it helps. Thank you for reading :)
+
+
+
      
  
